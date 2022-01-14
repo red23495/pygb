@@ -1,5 +1,9 @@
 from pygb.motherboard import Motherboard
-import os
 
 if __name__ == '__main__':
-    motherboard = Motherboard()
+    try:
+        motherboard = Motherboard()
+        motherboard.run()
+    except Exception as e:
+        print("ERROR: ", str(e))
+
