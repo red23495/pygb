@@ -15,7 +15,7 @@ class Motherboard:
     def read(self, *, address: int, size: int=1):
         return self._bus.read(address=address, size=size)
 
-    def tick(self, cycles: int):
+    def tick(self, *, cycles: int):
         self._ticks += cycles
 
     def run(self):
