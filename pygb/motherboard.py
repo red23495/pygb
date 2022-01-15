@@ -10,9 +10,13 @@ class Motherboard:
         self._boot.load_boot()
         self._bus = Bus(boot=self._boot)
         self._cpu = CPU(motherboard=self)
+        self._ticks = 0
 
     def read(self, *, address: int, size: int=1):
         return self._bus.read(address=address, size=size)
+
+    def tick(self, cycles: int):
+        self._ticks += cycles
 
     def run(self):
         while True:

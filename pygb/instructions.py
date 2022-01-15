@@ -8,6 +8,7 @@ class Instruction:
     name = ''
     opcode = 0
     instructions = {}
+    cycles = 4
 
     @classmethod
     def register(cls, val: ClassVar["Instruction"]):
@@ -17,7 +18,7 @@ class Instruction:
     def get_instruction(cls, opcode: int) -> "Instruction":
         inst = cls.instructions.get(opcode)
         if inst is None:
-            raise Exception('No instruction with opcode {} is found'.format(opcode))
+            raise Exception('No instruction with opcode 0x{:02X} is found'.format(opcode))
         return inst
 
     @abstractmethod
@@ -27,11 +28,26 @@ class Instruction:
 
 class NO_OP(Instruction):
 
-    name = 'NO_OP'
-    opcode = 0x0000
+    name = 'NOP'
+    opcode = 0x00
+    cycles = 4
 
     def execute(self, cpu: "CPU"):
         pass
 
 
 Instruction.register(NO_OP)
+
+
+class LD_SP_D16(Instruction):
+    name = 'LD_SP_D16'
+    opcode = 0x31
+    cycles = 12
+
+    def execute(self, cpu: "CPU"):
+        lsb: int = cpu.fetch_next()
+        msb: int = cpu.fetch_next()
+        cpu.reg_sp = (msb << 8) + lsb
+
+
+Instruction.register(LD_SP_D16)
