@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from pygb.utils import is_bit_set
 from typing import ClassVar, TYPE_CHECKING
 if TYPE_CHECKING:
     from pygb.cpu import CPU
@@ -25,9 +26,12 @@ class Instruction:
             raise Exception('No instruction with opcode 0x{:02X} is found'.format(opcode))
         return inst
 
+    def init(self, cpu: "CPU"):
+        pass
+
     @abstractmethod
     def execute(self, cpu: "CPU"):
-        raise Exception('Must override this function')
+        pass
 
     def set_z_flag(self, cpu: "CPU"):
         if self.z_flag:
@@ -58,9 +62,6 @@ class NO_OP(Instruction):
     opcode = 0x00
     cycles = 4
 
-    def execute(self, cpu: "CPU"):
-        pass
-
 
 Instruction.register(NO_OP)
 
@@ -79,6 +80,18 @@ class LD_BC_D16(Instruction):
 Instruction.register(LD_BC_D16)
 
 
+class LD_C_D8(Instruction):
+    name = 'LD_C_D8'
+    opcode = 0x0E
+    cycles = 8
+
+    def execute(self, cpu: "CPU"):
+        cpu.reg_c = cpu.fetch_next()
+
+
+Instruction.register(LD_C_D8)
+
+
 class LD_DE_D16(Instruction):
     name = 'LD_DE_D16'
     opcode = 0x11
@@ -91,6 +104,41 @@ class LD_DE_D16(Instruction):
 
 
 Instruction.register(LD_DE_D16)
+
+
+class LD_E_D8(Instruction):
+    name = 'LD_E_D8'
+    opcode = 0x1E
+    cycles = 8
+
+    def execute(self, cpu: "CPU"):
+        cpu.reg_e = cpu.fetch_next()
+
+
+Instruction.register(LD_E_D8)
+
+
+class JR_NZ_R8(Instruction):
+    name = 'JR_NZ_R8'
+    opcode = 0x20
+
+    def __init__(self):
+        self._cycles = 8
+
+    @property
+    def cycles(self):
+        return self._cycles
+
+    def execute(self, cpu: "CPU"):
+        offset = cpu.fetch_next()
+        if not cpu.flag_z:
+            cpu.reg_pc += offset
+            self._cycles = 12
+        else:
+            self._cycles = 8
+
+
+Instruction.register(JR_NZ_R8)
 
 
 class LD_HL_D16(Instruction):
@@ -107,6 +155,18 @@ class LD_HL_D16(Instruction):
 Instruction.register(LD_HL_D16)
 
 
+class LD_L_D8(Instruction):
+    name = 'LD_C_D8'
+    opcode = 0x2E
+    cycles = 8
+
+    def execute(self, cpu: "CPU"):
+        cpu.reg_l = cpu.fetch_next()
+
+
+Instruction.register(LD_L_D8)
+
+
 class LD_SP_D16(Instruction):
     name = 'LD_SP_D16'
     opcode = 0x31
@@ -119,6 +179,31 @@ class LD_SP_D16(Instruction):
 
 
 Instruction.register(LD_SP_D16)
+
+
+class LD_HL_DEC_A(Instruction):
+    name = 'LD_(HL-)_A'
+    opcode = 0x32
+    cycles = 8
+
+    def execute(self, cpu: "CPU"):
+        cpu.write(address=cpu.reg_hl, value=cpu.reg_a.to_bytes(1, 'big'))
+        cpu.reg_hl -= 1
+
+
+Instruction.register(LD_HL_DEC_A)
+
+
+class LD_A_D8(Instruction):
+    name = 'LD_A_D8'
+    opcode = 0x3E
+    cycles = 8
+
+    def execute(self, cpu: "CPU"):
+        cpu.reg_a = cpu.fetch_next()
+
+
+Instruction.register(LD_A_D8)
 
 
 class XOR_A(Instruction):
@@ -137,3 +222,41 @@ class XOR_A(Instruction):
 
 
 Instruction.register(XOR_A)
+
+
+class CB_PREFIX(Instruction):
+    instructions = {}
+    opcode = 0xCB
+
+    @property
+    def name(self):
+        return self.instruction.name
+
+    @property
+    def cycles(self):
+        return self.instruction.cycles
+
+    def __init__(self):
+        self.instruction: Instruction = None
+
+    def init(self, cpu: "CPU"):
+        sub_opcode = cpu.fetch_next()
+        self.instruction = CB_PREFIX.get_instruction(sub_opcode)
+
+    def execute(self, cpu: "CPU"):
+        return self.instruction.execute(cpu)
+
+
+class BIT_7H(Instruction):
+    name = 'BIT_7H'
+    opcode = 0x7C
+    cycles = 8
+
+    def set_z_flag(self, cpu: "CPU"):
+        cpu.flag_z = 1 if is_bit_set(cpu.reg_h, 7) else 0
+
+
+CB_PREFIX.register(BIT_7H)
+
+
+Instruction.register(CB_PREFIX)
