@@ -3,6 +3,7 @@ from pygb.bus import Bus
 from pygb.cpu import CPU
 from pygb.vram import VRAM
 from pygb.cart import Cart
+from pygb.io import IO
 
 
 class Motherboard:
@@ -12,9 +13,16 @@ class Motherboard:
         self._boot.load_boot()
         self._vram = VRAM()
         self._cart = Cart()
-        self._bus = Bus(boot=self._boot, vram=self._vram, cart=self._cart)
+        self._io = IO(onupdate=self.io_update_handler)
+        self._bus = Bus(boot=self._boot, vram=self._vram, cart=self._cart, io=self._io)
         self._cpu = CPU(motherboard=self)
         self._ticks = 0
+
+    def io_update_handler(self, address: int, value: bytes):
+        address = address + 0xFF00
+        if address == 0xFF26: #nr52 sound on/off
+            return print('Sound On/Off not implemented yet')
+        raise Exception(f'Unknown IO Register 0x{address:04X}')
 
     def read(self, *, address: int, size: int=1):
         return self._bus.read(address=address, size=size)
