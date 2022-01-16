@@ -20,6 +20,8 @@ class Motherboard:
 
     def io_update_handler(self, address: int, value: bytes):
         address = address + 0xFF00
+        if address == 0xFF11: # nr11 channel 1 wave pattern
+            return print('Sound Channel 1 wave pattern not implemented')
         if address == 0xFF26: #nr52 sound on/off
             return print('Sound On/Off not implemented yet')
         raise Exception(f'Unknown IO Register 0x{address:04X}')

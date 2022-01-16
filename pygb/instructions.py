@@ -80,6 +80,18 @@ class LD_BC_D16(Instruction):
 Instruction.register(LD_BC_D16)
 
 
+class LD_BC_ADDR_A(Instruction):
+    name = 'LD_(BC)_A'
+    opcode = 0x02
+    cycles = 8
+
+    def execute(self, cpu: "CPU"):
+        cpu.write(address=cpu.reg_bc, value=cpu.reg_a.to_bytes(1, "big"))
+
+
+Instruction.register(LD_BC_ADDR_A)
+
+
 class LD_C_D8(Instruction):
     name = 'LD_C_D8'
     opcode = 0x0E
@@ -104,6 +116,18 @@ class LD_DE_D16(Instruction):
 
 
 Instruction.register(LD_DE_D16)
+
+
+class LD_DE_ADDR_A(Instruction):
+    name = 'LD_(DE)_A'
+    opcode = 0x12
+    cycles = 8
+
+    def execute(self, cpu: "CPU"):
+        cpu.write(address=cpu.reg_de, value=cpu.reg_a.to_bytes(1, "big"))
+
+
+Instruction.register(LD_DE_ADDR_A)
 
 
 class LD_E_D8(Instruction):
@@ -260,3 +284,16 @@ CB_PREFIX.register(BIT_7H)
 
 
 Instruction.register(CB_PREFIX)
+
+
+class LD_C_ADDR_A(Instruction):
+    name = 'LD_(C)_A'
+    opcode = 0xE2
+    cycles = 8
+
+    def execute(self, cpu: "CPU"):
+        address = 0xFF00 + cpu.reg_c
+        cpu.write(address=address, value=cpu.reg_a.to_bytes(1, "big"))
+
+
+Instruction.register(LD_C_ADDR_A)
