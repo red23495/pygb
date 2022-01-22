@@ -35,19 +35,19 @@ class Instruction:
 
     def set_z_flag(self, cpu: "CPU"):
         if self.z_flag:
-            cpu.reg_f = self.z_flag
+            cpu.flag_z = self.z_flag
 
     def set_n_flag(self, cpu: "CPU"):
         if self.n_flag:
-            cpu.reg_f = self.n_flag
+            cpu.flag_n = self.n_flag
 
     def set_h_flag(self, cpu: "CPU"):
         if self.h_flag:
-            cpu.reg_f = self.h_flag
+            cpu.flag_h = self.h_flag
 
     def set_c_flag(self, cpu: "CPU"):
         if self.c_flag:
-            cpu.reg_f = self.c_flag
+            cpu.flag_c = self.c_flag
 
     def set_flags(self, cpu: "CPU"):
         self.set_z_flag(cpu)
@@ -92,6 +92,21 @@ class LD_BC_ADDR_A(Instruction):
 Instruction.register(LD_BC_ADDR_A)
 
 
+class INC_C(Instruction):
+    name = 'INC_C'
+    opcode = 0x0C
+    cycles = 4
+    n_flag = 0
+
+    def execute(self, cpu: "CPU"):
+        cpu.reg_c += 1
+        self.z_flag = int(cpu.reg_c == 0)
+        self.h_flag = int((cpu.reg_c & 0xFF) == 0)
+
+
+Instruction.register(INC_C)
+
+
 class LD_C_D8(Instruction):
     name = 'LD_C_D8'
     opcode = 0x0E
@@ -128,6 +143,21 @@ class LD_DE_ADDR_A(Instruction):
 
 
 Instruction.register(LD_DE_ADDR_A)
+
+
+class INC_E(Instruction):
+    name = 'INC_E'
+    opcode = 0x1C
+    cycles = 4
+    n_flag = 0
+
+    def execute(self, cpu: "CPU"):
+        cpu.reg_e += 1
+        self.z_flag = int(cpu.reg_e == 0)
+        self.h_flag = int((cpu.reg_e & 0xFF) == 0)
+
+
+Instruction.register(INC_E)
 
 
 class LD_E_D8(Instruction):
@@ -230,6 +260,18 @@ class LD_A_D8(Instruction):
 Instruction.register(LD_A_D8)
 
 
+class LD_HL_ADDR_A(Instruction):
+    name = 'LD_(HL)_A'
+    opcode = 0x77
+    cycles = 8
+
+    def execute(self, cpu: "CPU"):
+        cpu.write(address=cpu.reg_hl, value=cpu.reg_a.to_bytes(1, 'big'))
+
+
+Instruction.register(LD_HL_ADDR_A)
+
+
 class XOR_A(Instruction):
     name = 'XOR_A'
     opcode = 0xAF
@@ -238,11 +280,9 @@ class XOR_A(Instruction):
     h_flag = 0
     c_flag = 0
 
-    def set_z_flag(self, cpu: "CPU"):
-        cpu.flag_z = int(cpu.reg_a == 0)
-
     def execute(self, cpu: "CPU"):
         cpu.reg_a ^= cpu.reg_a
+        self.z_flag = int(cpu.reg_a == 0)
 
 
 Instruction.register(XOR_A)
@@ -276,14 +316,27 @@ class BIT_7H(Instruction):
     opcode = 0x7C
     cycles = 8
 
-    def set_z_flag(self, cpu: "CPU"):
-        cpu.flag_z = 1 if is_bit_set(cpu.reg_h, 7) else 0
+    def execute(self, cpu: "CPU"):
+        self.z_flag = 1 if is_bit_set(cpu.reg_h, 7) else 0
 
 
 CB_PREFIX.register(BIT_7H)
 
 
 Instruction.register(CB_PREFIX)
+
+
+class LDH_A8_ADDR_A(Instruction):
+    name = 'LDH_(a8)_A'
+    opcode = 0xE0
+    cycles = 12
+
+    def execute(self, cpu: "CPU"):
+        address = 0xFF00 + cpu.fetch_next()
+        cpu.write(address=address, value=cpu.reg_a.to_bytes(1, "big"))
+
+
+Instruction.register(LDH_A8_ADDR_A)
 
 
 class LD_C_ADDR_A(Instruction):
